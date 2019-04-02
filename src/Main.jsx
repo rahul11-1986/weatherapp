@@ -1,105 +1,36 @@
 import React, {Component} from 'react'
 import styled from 'styled-components'
-import fewclouds from './images/coolbreeze.png'
-import lightrain from './images/heavyrainshower.png'
-import brokenclouds from './images/lightrainfall.png'
-import sunlightdrizzle from './images/sunlightdrizzle.png'
-import clearsky from './images/sunny.png'
-import thunderstorm from './images/thunderstorm.png'
+import {Countries} from './data'
+import ForecastList from './ForecastList'
+import SearchBox from './SearchBox'
+import Picker from './Picker'
+import Error from './Error'
 import 'babel-polyfill'
 
-const Days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-const Countries = [
-	{
-		value : 'IN',
-		name : 'India'
-	}, 
-	{
-		value : 'AU',
-		name : 'Australia'
-	}
-]
-
-const Images = {
-	"02d": clearsky,
-	"02n": fewclouds,
-	"04d": brokenclouds,
-	"10d": lightrain,
-	"10n": sunlightdrizzle,
-	"03d": thunderstorm
-	//"04n","01n","01d","02n",
-}
-
-const Container = styled.div`
-	height: 500px; 
-	width: 600px;
-	/* border: black 2px solid; */
-	font-size: 14px;
-	color: #0783ED;	
-`
-
-const Layout = styled.div`
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	/* border: 5px solid green; */
-	height: 450px;
-`
-
-const Forecast = styled.div`
-	display: flex;
-	flex-flow: row nowrap;
-	justify-content: space-around;
-`
-
-const Box = styled.div`
-	display: flex;
-	border: 0.2px solid black;
-	flex-flow: column nowrap;
-	padding: 0px;
-	margin: 0px;
-	align-items: center;
-	justify-content: space-around;
-	height: 150px;
-	padding: 0px 25px;
-`
-
-const Icon = styled.img`
-	margin: 10px 0px;
-	/* height: 75px;
-	max-width: 100px; */
-`
-
-const SmallText = styled.span`
+export const SmallText = styled.span`
 	font-size: ${props => props.size}px;
 	font-weight: 600;
 	margin-top: ${props => props.margin && props.margin}px;
 	text-shadow: ${props => props.shadow && '4px 4px 0 rgba(0,0,0,0.1)'};
-	/* border: 1px solid black; */
-
 `
 
-const Picker = styled.div`
-	/* border: 1px solid black; */
-	display: flex;
-	justify-content: space-between;
-	/* width: 250px; */
-`
-
-const Detail = styled.div`
-	padding: 10px;
-`
-
-const Paragraph = styled.p`
-	font-weight: bold;
+const Button = styled.input`
+	background:#0783ED;
+  	border-top: 1px solid #0783ED;
+  	border-bottom: 1px solid #0783ED;
+	color:white;
+	border-right: 0;
 `
 
 class Main extends Component {
 
 	constructor(props){
 		super(props)
-		this.state = { forecast : [], current_temperature : '', country : 'AU' }
+		this.state = { 
+			forecast : [], 
+			country : 'AU',
+			current_temperature : '', 
+		}
 	}
 
 	componentDidMount(){
@@ -107,22 +38,11 @@ class Main extends Component {
 		this.getForecast();
 	}
 
-	shouldComponentUpdate(nextProps, nextState) {
-		// console.log('nextState:', nextState)
-		// console.log('current_temperature:', this.state.current_temperature)
+	getForecast = async (e) =>  {
 
-		// if(nextState.country !== this.state.country){
-		// 	return true
-		// }
-
-		// if(nextState.current_temperature === this.state.current_temperature){
-		// 	return false;
-		// }
-
-		return true;
-	}
-
-	getForecast = async () =>  {
+		if(e) {
+			e.preventDefault()
+		}
 
 		let city = this.txtCity.value
 		let {country} = this.state 
@@ -160,12 +80,6 @@ class Main extends Component {
 					data = [...data, weather]
 				}
 			})
-
-			//let firstRow = dt && dt[0]
-	  
-			// if(firstRow){
-			// 	this.showCurrentTemperature(firstRow)
-			// }
 		} catch (error) {
 			console.log('error')
 		}
@@ -193,7 +107,6 @@ class Main extends Component {
 	}
 
 	setCountry = e => {
-
 		this.setState({
 			country : e.target.value
 		})
@@ -201,66 +114,38 @@ class Main extends Component {
 	
 	render(){
 
-		let {humidity, pressure, wind, forecast} = this.state
-
-		let climate = forecast.map((x,index) => {
-			return (
-				<Box key={index} onClick={ () => this.showCurrentTemperature(index)}>
-					<SmallText size={20}>{Days[x.day]}</SmallText>
-					<Icon src={Images[x.icon]} alt="name" width="50" height="50"/>
-					<span>
-						<SmallText size={18}>{x.current}°</SmallText>
-					</span>
-					<SmallText size={12}>{x.description}</SmallText>
-				</Box>
-			)
-		})
+		let {forecast} = this.state
 
 		let options = Countries.map((item, index) => <option key={index} value={item.value}>{item.name}</option>)
 
-		let hasRecords = climate.length > 0 ? true : false
+		let hasRecords = forecast && forecast.length > 0 ? true : false
 
 		return (
-				<Container>
-					<div>
-						<input type="text" ref={x => this.txtCity = x}placeholder="city"/>
+			<div className="main">
+				<div className="container">
+					<SearchBox submit={this.getForecast} >
+						<input type="search" ref={x => this.txtCity = x} placeholder="city" required/>
 						<select value={this.state.country} onChange={this.setCountry}>
 							{options}
 						</select>
-						<button onClick={this.getForecast}>Search</button>
-					</div>
+						<Button type="submit" value="Search" />
+					</SearchBox>
 					{
 						!hasRecords  ? 
 						(
-							<p>No record found.</p>
+							<Error>No record found.</Error>
 						) : 
 						(
-							<Layout>
-								<Picker>
-									<div>
-									<SmallText shadow size={100}>
-										{this.state.current_temperature}
-									</SmallText>
-									<SmallText shadow margin={17} size={40}>°C</SmallText>
-									</div>
-									<Detail>
-										<Paragraph>Humidity: {humidity}%</Paragraph>
-										<Paragraph>Pressure: {pressure} MB</Paragraph>
-										<Paragraph>Wind: {Convert(wind)} KM/H</Paragraph>
-										{/* <Paragraph>Sea level:</Paragraph> */}
-									</Detail>
-								</Picker>
-								<Forecast>{climate}</Forecast>
-							</Layout>
+							<div className="layout">
+								<Picker {...this.state} />
+								<ForecastList list={forecast} click={this.showCurrentTemperature} />
+							</div>
 						)
 					}
-				</Container>
+				</div>
+			</div>
 		)
 	}
-}
-
-function Convert(wind){
-	return Math.round(wind * 18/5);
 }
 
 export default Main
